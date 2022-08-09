@@ -1,14 +1,14 @@
 {
-  "name": "typescript-nextjs-starter",
-  "description": "A TypeScript starter for Next.js that includes all you need to build amazing projects",
+  "name": "trendcaster",
+  "description": "trends for Farcaster",
   "version": "1.0.0",
   "private": true,
-  "author": "João Pedro Schmitz <hey@joaopedro.dev> (@jpedroschmitz)",
+  "author": "Madhur Shrimal <madhur.shrimal@gmail.com> (@shrimalmadhur)",
   "license": "MIT",
   "keywords": [
     "nextjs",
-    "starter",
-    "typescript"
+    "farcaster",
+    "analytics"
   ],
   "scripts": {
     "dev": "next",
@@ -17,13 +17,6 @@
     "type-check": "tsc",
     "lint": "eslint --ignore-path .gitignore \"src/**/*.+(ts|js|tsx)\"",
     "format": "prettier --ignore-path .gitignore \"src/**/*.+(ts|js|tsx)\" --write",
-    "postinstall": "husky install"
-  },
-  "lint-staged": {
-    "./src/**/*.{ts,js,jsx,tsx}": [
-      "eslint --ignore-path .gitignore --fix",
-      "prettier --ignore-path .gitignore --write"
-    ]
   },
   "dependencies": {
     "next": "12.2.3",
