@@ -4,6 +4,7 @@ const cron = require('node-cron')
 const { providers, Contract, utils } = require('ethers')
 const { MongoClient, ServerApiVersion } = require('mongodb')
 
+console.log(process.env.MONGODB_URI)
 const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -191,12 +192,14 @@ async function indexProfiles() {
     )
 }
 
-// Run job every 2 hours
-cron.schedule('0 */2 * * *', () => {
-    indexProfiles()
-})
+indexProfiles()
 
-// Run job 30 mins
-cron.schedule('*/30 * * * *', () => {
-    indexCasts()
-})
+// // Run job every 2 hours
+// cron.schedule('0 */2 * * *', () => {
+//     indexProfiles()
+// })
+
+// // Run job 30 mins
+// cron.schedule('*/30 * * * *', () => {
+//     indexCasts()
+// })
