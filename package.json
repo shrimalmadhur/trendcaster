@@ -16,11 +16,15 @@
     "start": "next start",
     "type-check": "tsc",
     "lint": "eslint --ignore-path .gitignore \"src/**/*.+(ts|js|tsx)\"",
-    "format": "prettier --ignore-path .gitignore \"src/**/*.+(ts|js|tsx)\" --write",
+    "format": "prettier --ignore-path .gitignore \"src/**/*.+(ts|js|tsx)\" --write"
   },
   "dependencies": {
+    "axios": "0.27.2",
+    "chart.js": "3.9.1",
+    "mongodb": "4.8.1",
     "next": "12.2.3",
     "react": "18.2.0",
+    "react-chartjs-2": "4.3.1",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
