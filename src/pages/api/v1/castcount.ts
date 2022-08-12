@@ -33,11 +33,11 @@ export default async function handler(
 
     // Order by desc and last 10 days
     const profileCounts = await db
-        .collection("profiles_count")
+        .collection("casts_count")
         .find({})
         .toArray()
         .catch(() => {
-        console.error("Error getting number of profiles from MongoDB");
+        console.error("Error getting number of casts from MongoDB");
         return null;
         });
 
@@ -55,14 +55,13 @@ export default async function handler(
         labels,
         datasets: [
             {
-                label: "Profiles",
+                label: "Casts",
                 data: countArray,
                 borderColor: "rgb(255, 99, 132)",
                 backgroundColor: "rgba(255, 99, 132, 0.5)",
             },
         ],
     };
-    // console.log(result)
     client.close()
     res.status(200).json(data);
   } catch (error) {
