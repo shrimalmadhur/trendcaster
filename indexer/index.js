@@ -1,3 +1,5 @@
+
+// Indexer code inspired by - https://github.com/gskril/farcaster-indexer
 require('dotenv').config()
 const got = require('got')
 const cron = require('node-cron')
