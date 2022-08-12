@@ -1,6 +1,7 @@
-import { FC, useContext, useRef } from 'react';
+import { FC, useContext, useEffect, useRef, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from '@/styles/Home.module.css';
+import axios from "axios";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -37,13 +38,30 @@ export const options = {
 interface Props {
     response: any
 }
+
+const defaultData = {
+    labels: [],
+    datasets: [
+        {
+            label: "Profiles",
+            data: [],
+            borderColor: "rgb(255, 99, 132)",
+            backgroundColor: "rgba(255, 99, 132, 0.5)",
+        },
+    ],
+};
   
 const ProfileCountChart: FC<Props> = ({ response }) => {
-    // console.log(response)
+    const [data, setData] = useState(defaultData)
+    useEffect(() => {
+        axios.get("api/v1/profilecount").then((response) => {
+            setData(response.data)
+        })
+    }, [])
 
     return (
         <div className={styles.container}>
-            <Line width={500} height={200} options={options} data={response} />
+            <Line width={500} height={200} options={options} data={data} />
         </div>
     );
 };
