@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const ContentSecurityPolicy = `
-  default-src 'self' vitals.vercel-insights.com;
+  connect-src 'self' vitals.vercel-insights.com; 
 `
 
 // You can choose which headers to add to the list
@@ -21,7 +21,7 @@ const nextConfig = {
     return [
       {
         // Apply these headers to all routes in your application.
-        source: '/vitals',
+        source: '/:path*',
         headers: securityHeaders,
       },
     ]
