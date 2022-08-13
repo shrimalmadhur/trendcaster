@@ -11,6 +11,7 @@ interface Props {
 const Home: FC<Props> = ({ response }) => {
   return (
     <div className={styles.container}>
+      <h3>Works best with Desktop browsers (mobile improvements coming soon)</h3>
       <Trends data={response}></Trends>
     </div>
   );
