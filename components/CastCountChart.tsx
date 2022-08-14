@@ -60,8 +60,8 @@ const CastCountChart: FC<Props> = ({ response }) => {
     }, [])
 
     return (
-        <div className={styles.container}>
-            <Line width={500} height={200} options={options} data={data} />
+        <div>
+            <Line options={options} data={data} />
         </div>
     );
 };

@@ -8,7 +8,6 @@ const { MongoClient, ServerApiVersion } = require('mongodb')
 const { removeStopwords } = require('stopword')
 const { keys } = require('./registry-abi.js')
 
-console.log(process.env.MONGODB_URI)
 const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -106,9 +105,7 @@ async function indexCasts() {
 
     const date = Date.now() - 24*60*60*1000
 
-    // filters - date > 24 hrs
-    // filter our recast:farcaster://
-    // remove stop words
+    //  /(\w+)caster\W*/gm
 
     const re = /\s+/;
     const filteredCast = allCasts
@@ -298,14 +295,20 @@ async function indexProfiles() {
     )
 }
 
+
+async function main() {
+    await indexProfiles()
+
+    await indexCasts()
+}
 // indexProfiles()
 
-indexCasts()
+// indexCasts()
 
-// // Run job every 2 hours
-// cron.schedule('0 */2 * * *', () => {
-//     indexProfiles()
-// })
+// Run job every day at 8pm
+cron.schedule('0 20 * * *', () => {
+    main()
+});
 
 // // Run job 30 mins
 // cron.schedule('*/30 * * * *', () => {
