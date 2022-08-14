@@ -107,9 +107,12 @@ async function indexCasts() {
 
     //  /(\w+)caster\W*/gm
 
+    const bots = ["perl"]
+    
     const re = /\s+/;
     const filteredCast = allCasts
         .filter(cast => cast.body.publishedAt > date)
+        .filter(cast => !bots.includes(cast.body.username))
         .filter(cast => !cast.body.data.text.startsWith("recast:farcaster://"))
         .filter(cast => !cast.body.data.text.startsWith("delete:farcaster://"))
         .map(cast => removeStopwords(cast.body.data.text.split(re)))
@@ -119,6 +122,7 @@ async function indexCasts() {
     // const re = /\s+/;
     const wordMap = {};
     const wordCount = []
+    const wordsToIgnore = ["-"]
     for (const castArr of filteredCast) {
         // console.log(castArr)
         for (let word of castArr) {
@@ -126,7 +130,11 @@ async function indexCasts() {
             word = word.toLowerCase()
             // TODO: remove only punctuations
             // TODO: remove punctuations from start and end
-            if (word.startsWith("@") || word.startsWith("https://") || word.startsWith("http://") || !isNaN(word)) {
+            if (word.startsWith("@") 
+                || word.startsWith("https://") 
+                || word.startsWith("http://") 
+                || !isNaN(word) 
+                || wordsToIgnore.includes(word)) {
                 continue;
             }
             // console.log(wordMap[word])
@@ -301,14 +309,16 @@ async function main() {
 
     await indexCasts()
 }
+
+main()
 // indexProfiles()
 
 // indexCasts()
 
 // Run job every day at 8pm
-cron.schedule('0 20 * * *', () => {
-    main()
-});
+// cron.schedule('0 20 * * *', () => {
+//     main()
+// });
 
 // // Run job 30 mins
 // cron.schedule('*/30 * * * *', () => {

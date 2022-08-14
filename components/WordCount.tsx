@@ -19,7 +19,7 @@ const WordCount: FC = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map(function(entry, index){
+                    {data.map(function(entry:any, index){
                         return <tr key={index}>
                             <td className='w-1/2 text-center border border-slate-700'>{entry.word}</td>
                             <td className='w-1/2 text-center border border-slate-700'>{entry.count}</td>
