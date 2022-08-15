@@ -32,22 +32,24 @@ export default async function handler(
     const db = client.db("farcaster");
 
     // Order by desc and last 10 days
-    const profileCounts = await db
+    const castsCount = await db
         .collection("casts_count")
-        .find({})
+        .find()
+        .sort({time: -1})
+        .limit(10)
         .toArray()
         .catch(() => {
-        console.error("Error getting number of casts from MongoDB");
-        return null;
+            console.error("Error getting number of casts from MongoDB");
+            return null;
         });
 
-    if (!profileCounts) {
+    if (!castsCount) {
         return { props: { response: "" } };
     }
 
     const labels = [];
     const countArray = [];
-    for (let eachCount of profileCounts) {
+    for (let eachCount of castsCount.reverse()) {
         labels.push(new Date(eachCount.time).toLocaleDateString("eb-US"));
         countArray.push(eachCount.count);
     }

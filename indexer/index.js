@@ -149,12 +149,14 @@ async function indexCasts() {
     // console.log(wordMap)
 
     // remove small counts 
-    const removeCount = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const removeCount = Array.from({length: 50}, (_, i) => i + 1);
     for(let word in wordMap) {
-        if (removeCount.includes(wordMap[word])){
+        const count = wordMap[word]
+        const weight = getWordWeight(word, count)
+        if (removeCount.includes(weight)){
             continue;
         }
-        wordCount.push({word: word, count: wordMap[word]});
+        wordCount.push({word: word, count: count, weight: weight});
     }
 
     const oldWC = db.collection('word_count')
@@ -188,6 +190,12 @@ async function indexCasts() {
         `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
     )
     console.log('done')
+}
+
+function getWordWeight(word, count) {
+    // word weight is very simple - larger the length, more the weight
+    // eventually it can be more smart
+    return count * word.length;
 }
 
 async function indexProfiles() {
@@ -310,15 +318,15 @@ async function main() {
     await indexCasts()
 }
 
-main()
+// main()
 // indexProfiles()
 
 // indexCasts()
 
 // Run job every day at 8pm
-// cron.schedule('0 20 * * *', () => {
-//     main()
-// });
+cron.schedule('0 20 * * *', () => {
+    main()
+});
 
 // // Run job 30 mins
 // cron.schedule('*/30 * * * *', () => {

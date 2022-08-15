@@ -34,11 +34,13 @@ export default async function handler(
     // Order by desc and last 10 days
     const profileCounts = await db
         .collection("profiles_count")
-        .find({})
+        .find()
+        .sort({time: -1})
+        .limit(10)
         .toArray()
         .catch(() => {
-        console.error("Error getting number of profiles from MongoDB");
-        return null;
+            console.error("Error getting number of profiles from MongoDB");
+            return null;
         });
 
     if (!profileCounts) {
@@ -47,7 +49,7 @@ export default async function handler(
 
     const labels = [];
     const countArray = [];
-    for (let eachCount of profileCounts) {
+    for (let eachCount of profileCounts.reverse()) {
         labels.push(new Date(eachCount.time).toLocaleDateString("eb-US"));
         countArray.push(eachCount.count);
     }
