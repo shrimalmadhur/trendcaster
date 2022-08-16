@@ -107,6 +107,9 @@ async function indexCasts() {
 
     //  /(\w+)caster\W*/gm
 
+    // Index casts count
+    // allCasts
+
     const bots = ["perl"]
     
     const re = /\s+/;
@@ -131,8 +134,9 @@ async function indexCasts() {
             // TODO: remove only punctuations
             // TODO: remove punctuations from start and end
             if (word.startsWith("@") 
-                || word.startsWith("https://") 
-                || word.startsWith("http://") 
+                || word.includes("https://") 
+                || word.includes("http://") 
+                || word.includes("farcaster://casts")
                 || !isNaN(word) 
                 || wordsToIgnore.includes(word)) {
                 continue;
@@ -327,6 +331,7 @@ async function main() {
 cron.schedule('0 20 * * *', () => {
     main()
 });
+
 
 // // Run job 30 mins
 // cron.schedule('*/30 * * * *', () => {

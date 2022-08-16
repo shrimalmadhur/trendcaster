@@ -35,7 +35,7 @@ export default async function handler(
     const wordCount = await db
         .collection("word_count")
         .find()
-        .sort({count: -1})
+        .sort({weight: -1})
         .limit(10)
         .toArray()
         .catch(() => {
@@ -50,7 +50,7 @@ export default async function handler(
 
     const cleanWC = []
     for (let eachWord of wordCount) {
-        cleanWC.push({word: eachWord.word, count: eachWord.count})
+        cleanWC.push({word: eachWord.word})
     }
 
 
