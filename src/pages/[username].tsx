@@ -16,7 +16,10 @@ const Username: FC = () => {
         }
     }, [username])
     return (
-        <div className="pl-10 pt-10 text-2xl font-mono">Total cast count for {username}: {castCount}</div>
+        <div>
+            <div className="pl-10 pt-10 text-2xl font-mono">Total cast count for {username}: {castCount}</div>
+            <div className="pl-10 text-sm">updated every 24 hrs</div>
+        </div>
     )
 }
 
