@@ -434,7 +434,7 @@ async function main() {
     await indexCasts()
 }
 
-// main()
+main()
 // indexProfiles()
 
 indexCasts()
