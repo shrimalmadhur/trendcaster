@@ -4,6 +4,7 @@ import styles from "@/styles/Home.module.css";
 import Trends from "components/Trends";
 import axios from "axios";
 import { MongoClient, ServerApiVersion } from "mongodb";
+import ProfileDetails from "components/ProfileDetails";
 
 interface Props {
   response: any;
@@ -11,6 +12,7 @@ interface Props {
 const Home: FC<Props> = ({ response }) => {
   return (
     <div className={styles.container}>
+      {/* <ProfileDetails></ProfileDetails> */}
       <h3>Works best with Desktop browsers (mobile improvements coming soon)</h3>
       <Trends data={response}></Trends>
     </div>

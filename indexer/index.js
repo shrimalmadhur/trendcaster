@@ -52,6 +52,7 @@ async function indexCasts() {
         .collection('profiles')
         // .find({"merkleRoot": "0x17cc2df1a869ed2031cb0466debe6855088366792dc637c2a33622b95660138c"})
         .find({})
+        // .limit(10)
         .toArray()
         .catch(() => {
             console.error('Error getting number of profiles from MongoDB')
@@ -94,6 +95,8 @@ async function indexCasts() {
         count: allCasts.length,
         time: Date.now()
     }
+
+    await indexPersonalData(db, allCasts)
 
     const castsCountCollection = db.collection('casts_count');
     await castsCountCollection
@@ -194,6 +197,52 @@ async function indexCasts() {
         `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
     )
     console.log('done')
+}
+
+async function indexPersonalData(db, allCasts) {
+    const oldConnection = db.collection('profile_details')
+    const newCollection = db.collection('profile_details_temp')
+
+    // If the temp table already exists, drop it
+    try {
+        await newCollection.drop();
+    } catch {}
+
+    // Avoid indexing duplicate casts
+    await newCollection.createIndex({ farcasterAddress: 1 }, { unique: true })
+
+    const personalDB =  allCasts.reduce((result, cast) => {
+        if (result[cast.body.address]) {
+            result[cast.body.address].count += 1
+        } else {
+            result[cast.body.address] = {
+                count: 1,
+                username: cast.body.username
+            }
+        }
+        return result;
+    }, {})
+    const result = []
+
+    for (let key in personalDB) {
+        result.push({
+            farcasterAddress: key,
+            castCount: personalDB[key].count,
+            username: personalDB[key].username
+        })
+    }
+
+    await newCollection.insertMany(result).catch((err) => {
+        console.log(`Error saving casts to MongoDB.`, err.message)
+    })
+
+    // Replace existing collection with new casts
+    try {
+        await oldConnection.drop()
+    } catch (err) {
+        console.log('Error dropping collection.', err.codeName)
+    }
+    await newCollection.rename('profile_details')
 }
 
 function getWordWeight(word, count) {
@@ -322,15 +371,15 @@ async function main() {
     await indexCasts()
 }
 
-// main()
+main()
 // indexProfiles()
 
 // indexCasts()
 
 // Run job every day at 8pm
-cron.schedule('0 20 * * *', () => {
-    main()
-});
+// cron.schedule('0 20 * * *', () => {
+//     main()
+// });
 
 
 // // Run job 30 mins
