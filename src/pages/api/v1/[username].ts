@@ -48,7 +48,9 @@ export default async function handler(
     const response = {
         username: username,
         count: castsCount[0].castCount,
-        farcasterAddress: castsCount[0].farcasterAddress
+        farcasterAddress: castsCount[0].farcasterAddress,
+        recastCount: castsCount[0].recastCount,
+        firstCastCounnt: new Date(castsCount[0].firstCasteDate).toLocaleTimeString()
     }
 
     client.close()

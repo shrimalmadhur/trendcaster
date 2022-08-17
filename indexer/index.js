@@ -32,20 +32,7 @@ const registryContract = new Contract(
     provider
 )
 
-async function indexCasts() {
-    const startTime = Date.now()
-    const db = client.db('farcaster')
-    const oldConnection = db.collection('casts')
-    const newCollection = db.collection('casts_temp')
-
-    // If the temp table already exists, drop it
-    try {
-        await newCollection.drop()
-    } catch {}
-
-    // Avoid indexing duplicate casts
-    await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
-
+async function getAllCasts(db) {
     const allCasts = []
     let profilesIndexed = 0
     const profiles = await db
@@ -59,7 +46,9 @@ async function indexCasts() {
             return null
         })
 
-    if (!profiles) return
+    if (!profiles) 
+        return
+
     console.log(`Indexing casts from ${profiles.length} profiles...`)
 
     for (let i = 0; i < profiles.length; i++) {
@@ -77,7 +66,22 @@ async function indexCasts() {
         allCasts.push(...activity)
         profilesIndexed++
     }
+    return [allCasts, profilesIndexed];
+}
 
+async function indexAllCasts(db, allCasts) {
+    const oldConnection = db.collection('casts')
+    const newCollection = db.collection('casts_temp')
+
+    // If the temp table already exists, drop it
+    try {
+        await newCollection.drop()
+    } catch {}
+
+    // Avoid indexing duplicate casts
+    await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
+
+    
     await newCollection.insertMany(allCasts).catch((err) => {
         console.log(`Error saving casts to MongoDB.`, err.message)
     })
@@ -89,23 +93,9 @@ async function indexCasts() {
         console.log('Error dropping collection.', err.codeName)
     }
     await newCollection.rename('casts')
+}
 
-
-    const countData = {
-        count: allCasts.length,
-        time: Date.now()
-    }
-
-    await indexPersonalData(db, allCasts)
-
-    const castsCountCollection = db.collection('casts_count');
-    await castsCountCollection
-        .insertOne(countData)
-        .then(() => console.log("casts count data inserted"))
-        .catch((err) => {
-            console.log(`Error saving cast count data ${err.message}`)
-        });
-
+async function getWordCountData(allCasts) {
     const date = Date.now() - 24*60*60*1000
 
     //  /(\w+)caster\W*/gm
@@ -166,6 +156,24 @@ async function indexCasts() {
         wordCount.push({word: word, count: count, weight: weight});
     }
 
+    return wordCount;
+}
+
+async function saveCastCount(db, size) {
+    const countData = {
+        count: size,
+        time: Date.now()
+    }
+    const castsCountCollection = db.collection('casts_count');
+    await castsCountCollection
+        .insertOne(countData)
+        .then(() => console.log("casts count data inserted"))
+        .catch((err) => {
+            console.log(`Error saving cast count data ${err.message}`)
+        });
+}
+
+async function saveWordCountData(db, wordCount) {
     const oldWC = db.collection('word_count')
     const newWC= db.collection('word_count_temp')
 
@@ -190,8 +198,30 @@ async function indexCasts() {
 
     // console.log(wordCount)
 
-    const endTime = Date.now()
-    const secondsTaken = (endTime - startTime) / 1000
+}
+
+async function indexCasts() {
+    const startTime = Date.now();
+    const db = client.db('farcaster');
+
+    const returnArray = await getAllCasts(db);
+    const allCasts = returnArray[0];
+    const profilesIndexed = returnArray[1];
+    if (!allCasts) {
+        return;
+    }
+    
+    await indexAllCasts(db, allCasts);
+
+    await indexPersonalData(db, allCasts);
+
+    await saveCastCount(db, allCasts.length);
+
+    const wordCount = await getWordCountData(allCasts);
+    await saveWordCountData(db, wordCount)
+    
+    const endTime = Date.now();
+    const secondsTaken = (endTime - startTime) / 1000;
 
     console.log(
         `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
@@ -210,15 +240,43 @@ async function indexPersonalData(db, allCasts) {
 
     // Avoid indexing duplicate casts
     await newCollection.createIndex({ farcasterAddress: 1 }, { unique: true })
+    await newCollection.createIndex({ username: 1 })
 
     const personalDB =  allCasts.reduce((result, cast) => {
+        const castText = cast.body.data.text;
+        const currentCastDate = cast.body.publishedAt;
         if (result[cast.body.address]) {
-            result[cast.body.address].count += 1
-        } else {
-            result[cast.body.address] = {
-                count: 1,
-                username: cast.body.username
+            if (castText.startsWith("delete:farcaster://")){
+                result[cast.body.address].deletedCastCount += 1
+            } else if (castText.startsWith("recast:farcaster://")) {
+                result[cast.body.address].recastCount += 1
+            } else {
+                result[cast.body.address].count += 1
             }
+
+            // get first cast
+            if (result[cast.body.address].firstCastDate > currentCastDate) {
+                result[cast.body.address].firstCastDate = currentCastDate;
+            }
+        } else {
+            // you cannot have deleted cast as your first cast to skipping the delete scenario
+            if (castText.startsWith("recast:farcaster://")) {
+                result[cast.body.address] = {
+                    count: 0,
+                    recastCount: 1,
+                    deletedCastCount: 0,
+                    username: cast.body.username,
+                    firstCastDate: currentCastDate
+                }
+            } else {
+                result[cast.body.address] = {
+                    count: 1,
+                    recastCount: 0,
+                    deletedCastCount: 0,
+                    username: cast.body.username,
+                    firstCastDate: currentCastDate
+                }
+            }  
         }
         return result;
     }, {})
@@ -227,10 +285,15 @@ async function indexPersonalData(db, allCasts) {
     for (let key in personalDB) {
         result.push({
             farcasterAddress: key,
-            castCount: personalDB[key].count,
-            username: personalDB[key].username
+            castCount: personalDB[key].count - personalDB[key].deletedCastCount, // deleted cast are also stored
+            recastCount: personalDB[key].recastCount,
+            deletedCastCount: personalDB[key].deletedCastCount,
+            username: personalDB[key].username,
+            firstCastDate: personalDB[key].firstCastDate
         })
     }
+
+    console.log(result);
 
     await newCollection.insertMany(result).catch((err) => {
         console.log(`Error saving casts to MongoDB.`, err.message)
@@ -371,10 +434,10 @@ async function main() {
     await indexCasts()
 }
 
-main()
+// main()
 // indexProfiles()
 
-// indexCasts()
+indexCasts()
 
 // Run job every day at 8pm
 // cron.schedule('0 20 * * *', () => {
