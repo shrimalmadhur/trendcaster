@@ -11,9 +11,8 @@ interface Props {
 }
 const Home: FC<Props> = ({ response }) => {
   return (
-    <div className={styles.container}>
-      {/* <ProfileDetails></ProfileDetails> */}
-      <h3>Works best with Desktop browsers (mobile improvements coming soon)</h3>
+    <div className="grid grid-cols-1">
+      <ProfileDetails></ProfileDetails>
       <Trends data={response}></Trends>
     </div>
   );
