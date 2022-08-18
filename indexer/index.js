@@ -293,7 +293,7 @@ async function indexPersonalData(db, allCasts) {
         })
     }
 
-    console.log(result);
+    // console.log(result);
 
     await newCollection.insertMany(result).catch((err) => {
         console.log(`Error saving casts to MongoDB.`, err.message)
@@ -437,7 +437,7 @@ async function main() {
 main()
 // indexProfiles()
 
-indexCasts()
+// indexCasts()
 
 // Run job every day at 8pm
 // cron.schedule('0 20 * * *', () => {

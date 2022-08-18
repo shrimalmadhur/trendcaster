@@ -1,0 +1,11 @@
+{
+    "labels": ["A", "B", "C", "D"],
+    "datasets": [
+        {
+            "label": "Profiles",
+            "data": ["4", "5", "8", "1"],
+            "borderColor": "rgb(255, 99, 132)",
+            "backgroundColor": "rgba(255, 99, 132, 0.5)"
+        }
+    ]
+}
