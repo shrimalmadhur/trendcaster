@@ -60,7 +60,7 @@ export default async function handler(
     const labels = [];
     const countArray = [];
     for (let eachCount of profileCounts.reverse()) {
-      labels.push(new Date(eachCount.time).toLocaleDateString("eb-US"));
+      labels.push(new Date(eachCount.time).toLocaleString());
       countArray.push(eachCount.count);
     }
     const data = {
