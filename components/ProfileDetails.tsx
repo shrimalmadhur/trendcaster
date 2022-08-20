@@ -4,10 +4,28 @@ import React from 'react'
 import { init, useConnectWallet } from '@web3-onboard/react'
 import injectedModule from '@web3-onboard/injected-wallets'
 import { ethers } from 'ethers'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { 
+    Chart as ChartJS, 
+    ArcElement, 
+    Tooltip, 
+    Legend, 
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title, 
+} from 'chart.js';
 import { Pie } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_URL || ""
 
@@ -70,12 +88,26 @@ const options = {
     }
 };
 
+const barOptions = {
+    responsive: true,
+    plugins: {
+        legend: {
+            position: 'top' as const,
+        },
+        title: {
+            display: true,
+            text: 'Your Daily Cast Count - 30 days (Updated every 24 hrs)',
+        },
+    },
+};
+
 const ProfileDetails: FC = () => {
 
     const [{ wallet, connecting }, connect, disconnect] = useConnectWallet()
     const [username, setUsername] = useState()
-    const [profileDetails, setProfileDetails] = useState(defaultData)
-    const [pieData, setPieData] = useState(defaultPieData)
+    const [profileDetails, setProfileDetails] = useState(defaultData);
+    const [pieData, setPieData] = useState(defaultPieData);
+    const [last30DayData, setLast30DaysData] = useState(defaultPieData);
 
     useEffect(() => {
         if (wallet) {
@@ -118,6 +150,15 @@ const ProfileDetails: FC = () => {
         }
     }, [username])
 
+    useEffect(() => {
+        if (username) {
+            axios("/api/v1/usercastmonth/" + username)
+                .then((response) => {
+                    setLast30DaysData(response.data);
+                })
+        }
+    }, [username])
+
     // create an ethers provider
     let ethersProvider
 
@@ -140,8 +181,13 @@ const ProfileDetails: FC = () => {
                 <div className="flex flex-col">
                     <div className="pl-10 pt-10 text-3xl font-mono">@{username}</div>
                     <div className="pl-10 pt-10 text-2xl font-mono">Farcaster address: {profileDetails.farcasterAddress}</div>
-                    <div className="w-120 mx-auto">
-                        <Pie data={pieData} options={options}></Pie>
+                    <div className="grid grid-cols-2">
+                        <div className="w-120 mx-auto">
+                            <Pie data={pieData} options={options}></Pie>
+                        </div>
+                        <div>
+                            <Bar options={barOptions} data={last30DayData} />
+                        </div>
                     </div>
 
                     <div className="pl-10 text-sm">updated every 24 hrs</div>

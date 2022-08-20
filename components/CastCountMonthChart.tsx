@@ -61,7 +61,7 @@ const CastCountMonthChart: FC<Props> = ({ response }) => {
 
     return (
         <div>
-            <Bar options={options} data={data} />;
+            <Bar options={options} data={data} />
         </div>
     );
 };

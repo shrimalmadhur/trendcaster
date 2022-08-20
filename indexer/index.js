@@ -219,15 +219,15 @@ async function indexCasts() {
     
     // await indexAllCasts(db, allCasts);
 
+    // await saveCastCount(db, allCasts.length);
+
+    // const wordCount = await getWordCountData(allCasts);
+    // await saveWordCountData(db, wordCount)
+
+    // await indexPersonalData(db, allCasts);
+
     await indexCastsPerDay(db, allCasts);
 
-    await indexPersonalData(db, allCasts);
-
-    await saveCastCount(db, allCasts.length);
-
-    const wordCount = await getWordCountData(allCasts);
-    await saveWordCountData(db, wordCount)
-    
     const endTime = Date.now();
     const secondsTaken = (endTime - startTime) / 1000;
 
@@ -241,6 +241,92 @@ async function indexCastsPerDay(db, allCasts) {
     console.log("running indexCastsPerDay....")
     const date = Date.now() - 30*24*60*60*1000 // 30 days
 
+    const filteredCast = allCasts
+        .filter(cast => cast.body.publishedAt > date)
+
+    const resultDBObj = filteredCast.reduce((result, cast) => {
+        const currentCastDate = new Date(cast.body.publishedAt);
+        const currentDate = currentCastDate.toLocaleDateString();
+        const username = cast.body.username
+        if (result.all[currentDate]) {
+            result.all[currentDate] += 1
+        } else {
+            result.all[currentDate] = 1
+        }
+
+        if (result.users[username]) {
+            if (result.users[username][currentDate]) {
+                result.users[username][currentDate] += 1
+            } else {
+                result.users[username][currentDate] = 1 
+            }
+        } else {
+            result.users[username] = {};
+            result.users[username][currentDate] = 1   
+        }
+
+        return result;
+    }, { all: {}, users: {}})
+
+    await indexAll30DaysCast(db, resultDBObj);
+
+    await indexUsers30DaysCast(db, resultDBObj);
+}
+
+async function indexUsers30DaysCast(db, casts) {
+    console.log("running indexUsers30DaysCast....");
+    const usersCasts = []
+    for (let key in casts.users) {
+        const currUser = key;
+        const castData = casts.users[key];
+        const castDataArray = [];
+        for (let eachKey in castData){
+            castDataArray.push({
+                date: eachKey,
+                count: castData[eachKey],
+                dateInMs: (new Date(eachKey)).getTime()
+            })
+        }
+        usersCasts.push({
+            user: currUser,
+            casts: castDataArray,
+        });
+    }
+
+    const oldConnection = db.collection('users_casts_30days')
+    const newCollection = db.collection('users_casts_30days_temp')
+
+    // If the temp table already exists, drop it
+    try {
+        await newCollection.drop();
+    } catch {}
+
+    await newCollection.createIndex({ user: 1 });
+
+    await newCollection.insertMany(usersCasts).catch((err) => {
+        console.log(`Error saving casts to MongoDB.`, err.message)
+    })
+
+    // Replace existing collection with new casts
+    try {
+        await oldConnection.drop()
+    } catch (err) {
+        console.log('Error dropping collection.', err.codeName)
+    }
+    await newCollection.rename('users_casts_30days')
+}
+
+async function indexAll30DaysCast(db, casts) {
+    console.log("running indexAll30DaysCast....");
+    const totalCasts = []
+    for (let key in casts.all) {
+        totalCasts.push({
+            date: key,
+            count: casts.all[key],
+            dateInMs: (new Date(key)).getTime()
+        })
+    }
+
     const oldConnection = db.collection('casts_30days')
     const newCollection = db.collection('casts_30days_temp')
 
@@ -251,32 +337,7 @@ async function indexCastsPerDay(db, allCasts) {
 
     await newCollection.createIndex({ dateInMs: 1 });
 
-    const filteredCast = allCasts
-        .filter(cast => cast.body.publishedAt > date)
-
-    const resultDBObj = filteredCast.reduce((result, cast) => {
-        const currentCastDate = new Date(cast.body.publishedAt);
-        const currentDate = currentCastDate.toLocaleDateString();
-        if (result[currentDate]) {
-            result[currentDate] += 1
-        } else {
-            result[currentDate] = 1
-        }
-        return result;
-    }, {})
-
-    const result = []
-    for (let key in resultDBObj) {
-        result.push({
-            date: key,
-            count: resultDBObj[key],
-            dateInMs: (new Date(key)).getTime()
-        })
-    }
-
-    // console.log(result);
-
-    await newCollection.insertMany(result).catch((err) => {
+    await newCollection.insertMany(totalCasts).catch((err) => {
         console.log(`Error saving casts to MongoDB.`, err.message)
     })
 
@@ -496,10 +557,10 @@ async function main() {
     await indexCasts()
 }
 
-main()
+// main()
 // indexProfiles()
 
-// indexCasts()
+indexCasts()
 
 // Run job every day at 8pm
 // cron.schedule('0 20 * * *', () => {
