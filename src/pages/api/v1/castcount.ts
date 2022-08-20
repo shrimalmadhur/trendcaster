@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import seedData from "../../../../testdata/cast_count.json";
+import { connectToDatabase } from "../../../../util/mongodb";
 
 type Data = {
   name: string;
@@ -24,22 +25,23 @@ export default async function handler(
     return;
   }
 
-  const mongodbURL = process.env.NEXT_MONGODB_URI;
-  if (!mongodbURL) {
-    return { props: { response: "" } };
-  }
-  const client = new MongoClient(mongodbURL, {
-    serverApi: ServerApiVersion.v1,
-  });
+  //   const mongodbURL = process.env.NEXT_MONGODB_URI;
+  //   if (!mongodbURL) {
+  //     return { props: { response: "" } };
+  //   }
+  //   const client = new MongoClient(mongodbURL, {
+  //     serverApi: ServerApiVersion.v1,
+  //   });
 
-  client.connect((err) => {
-    if (err) {
-      console.error(err);
-      return { props: { response: "" } };
-    }
-  });
+  //   client.connect((err) => {
+  //     if (err) {
+  //       console.error(err);
+  //       return { props: { response: "" } };
+  //     }
+  //   });
   try {
-    const db = client.db("farcaster");
+    // const db = client.db("farcaster");
+    const { db } = await connectToDatabase();
 
     // Order by desc and last 10 days
     const castsCount = await db
@@ -69,15 +71,15 @@ export default async function handler(
         {
           label: "Casts",
           data: countArray,
-          borderColor: "rgb(255, 99, 132)",
-          backgroundColor: "rgba(255, 99, 132, 0.5)",
+          borderColor: "rgb(71, 210, 252)",
+          backgroundColor: "rgba(71, 210, 252, 0.5)",
         },
       ],
     };
-    client.close();
+    // client.close();
     res.status(200).json(data);
   } catch (error) {
-    client.close();
+    // client.close();
     console.log(error);
     return res.status(500).end(error);
   }

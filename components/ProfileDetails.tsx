@@ -4,6 +4,10 @@ import React from 'react'
 import { init, useConnectWallet } from '@web3-onboard/react'
 import injectedModule from '@web3-onboard/injected-wallets'
 import { ethers } from 'ethers'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_URL || ""
 
@@ -35,11 +39,43 @@ const defaultData = {
     firstCastCounnt: "loading..."
 }
 
+const defaultPieData = {
+    labels: ["def"],
+    datasets: [
+        {
+            label: '# of Casts',
+            data: ["1"],
+            backgroundColor: [
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                //   'rgba(153, 102, 255, 0.2)',
+                //   'rgba(255, 159, 64, 0.2)',
+            ],
+            borderColor: [
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+            ],
+            borderWidth: 1,
+        },
+    ],
+};
+
+const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    offset: 5,
+    animation: {
+        animateScale: true,
+        animateRotate: true
+    }
+};
+
 const ProfileDetails: FC = () => {
 
     const [{ wallet, connecting }, connect, disconnect] = useConnectWallet()
     const [username, setUsername] = useState()
     const [profileDetails, setProfileDetails] = useState(defaultData)
+    const [pieData, setPieData] = useState(defaultPieData)
 
     useEffect(() => {
         if (wallet) {
@@ -56,7 +92,28 @@ const ProfileDetails: FC = () => {
         if (username) {
             axios("/api/v1/" + username)
                 .then((response) => {
-                    setProfileDetails(response.data)
+                    setProfileDetails(response.data);
+                    const labels = ["Casts", "Recasts"];
+                    const chartData = [response.data.count, response.data.recastCount]
+                    const newPieData = {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '# of Casts',
+                                data: chartData,
+                                backgroundColor: [
+                                    'rgba(255, 206, 86, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)',
+                                ],
+                                borderColor: [
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                ],
+                                borderWidth: 1,
+                            },
+                        ],
+                    };
+                    setPieData(newPieData);
                 })
         }
     }, [username])
@@ -83,8 +140,10 @@ const ProfileDetails: FC = () => {
                 <div className="flex flex-col">
                     <div className="pl-10 pt-10 text-3xl font-mono">@{username}</div>
                     <div className="pl-10 pt-10 text-2xl font-mono">Farcaster address: {profileDetails.farcasterAddress}</div>
-                    <div className="pl-10 pt-10 text-2xl font-mono">Total cast: {profileDetails.count}</div>
-                    <div className="pl-10 pt-10 text-2xl font-mono">Total recast: {profileDetails.recastCount}</div>
+                    <div className="w-120 mx-auto">
+                        <Pie data={pieData} options={options}></Pie>
+                    </div>
+
                     <div className="pl-10 text-sm">updated every 24 hrs</div>
                 </div>
 

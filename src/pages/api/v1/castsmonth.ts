@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 import { MongoClient, ServerApiVersion } from "mongodb";
-import seedData from "../../../../testdata/word_count.json";
+import seedData from "../../../../testdata/cast_count.json";
 import { connectToDatabase } from "../../../../util/mongodb";
 
 type Data = {
@@ -25,49 +25,58 @@ export default async function handler(
     return;
   }
 
-  // const mongodbURL = process.env.NEXT_MONGODB_URI;
-  // if (!mongodbURL) {
-  //   return { props: { response: "" } };
-  // }
-  // const client = new MongoClient(mongodbURL, {
-  //   serverApi: ServerApiVersion.v1,
-  // });
-
-  // client.connect((err) => {
-  //   if (err) {
-  //     console.error(err);
+  //   const mongodbURL = process.env.NEXT_MONGODB_URI;
+  //   if (!mongodbURL) {
   //     return { props: { response: "" } };
   //   }
-  // });
+  //   const client = new MongoClient(mongodbURL, {
+  //     serverApi: ServerApiVersion.v1,
+  //   });
+
+  //   client.connect((err) => {
+  //     if (err) {
+  //       console.error(err);
+  //       return { props: { response: "" } };
+  //     }
+  //   });
   try {
     // const db = client.db("farcaster");
-
     const { db } = await connectToDatabase();
 
     // Order by desc and last 10 days
-    const wordCount = await db
-      .collection("word_count")
+    const castsCount = await db
+      .collection("casts_30days")
       .find()
-      .sort({ weight: -1 })
-      .limit(10)
+      .sort({ dateInMs: 1 })
       .toArray()
       .catch(() => {
         console.error("Error getting number of casts from MongoDB");
-        // client.close();
         return null;
       });
 
-    if (!wordCount) {
+    if (!castsCount) {
       return { props: { response: "" } };
     }
 
-    const cleanWC = [];
-    for (let eachWord of wordCount) {
-      cleanWC.push({ word: eachWord.word });
+    const labels = [];
+    const countArray = [];
+    for (let eachCount of castsCount) {
+      labels.push(eachCount.date);
+      countArray.push(eachCount.count);
     }
-
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: "Casts",
+          data: countArray,
+          borderColor: "rgb(67, 230, 110)",
+          backgroundColor: "rgba(67, 230, 110, 0.5)",
+        },
+      ],
+    };
     // client.close();
-    res.status(200).json(cleanWC);
+    res.status(200).json(data);
   } catch (error) {
     // client.close();
     console.log(error);

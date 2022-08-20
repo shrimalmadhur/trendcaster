@@ -33,6 +33,7 @@ const registryContract = new Contract(
 )
 
 async function getAllCasts(db) {
+    console.log("running getAllCasts....");
     const allCasts = []
     let profilesIndexed = 0
     const profiles = await db
@@ -70,6 +71,7 @@ async function getAllCasts(db) {
 }
 
 async function indexAllCasts(db, allCasts) {
+    console.log("running indexAllCasts....");
     const oldConnection = db.collection('casts')
     const newCollection = db.collection('casts_temp')
 
@@ -96,6 +98,7 @@ async function indexAllCasts(db, allCasts) {
 }
 
 async function getWordCountData(allCasts) {
+    console.log("running getWordCountData....");
     const date = Date.now() - 24*60*60*1000
 
     //  /(\w+)caster\W*/gm
@@ -118,7 +121,7 @@ async function getWordCountData(allCasts) {
     // const re = /\s+/;
     const wordMap = {};
     const wordCount = []
-    const wordsToIgnore = ["-"]
+    const wordsToIgnore = ["-", "will", "it's", "just", "not"]
     for (const castArr of filteredCast) {
         // console.log(castArr)
         for (let word of castArr) {
@@ -160,6 +163,7 @@ async function getWordCountData(allCasts) {
 }
 
 async function saveCastCount(db, size) {
+    console.log("running saveCastCount....")
     const countData = {
         count: size,
         time: Date.now()
@@ -174,6 +178,7 @@ async function saveCastCount(db, size) {
 }
 
 async function saveWordCountData(db, wordCount) {
+    console.log("running saveWordCountData....")
     const oldWC = db.collection('word_count')
     const newWC= db.collection('word_count_temp')
 
@@ -201,6 +206,7 @@ async function saveWordCountData(db, wordCount) {
 }
 
 async function indexCasts() {
+    console.log("running indexCasts....")
     const startTime = Date.now();
     const db = client.db('farcaster');
 
@@ -211,7 +217,9 @@ async function indexCasts() {
         return;
     }
     
-    await indexAllCasts(db, allCasts);
+    // await indexAllCasts(db, allCasts);
+
+    await indexCastsPerDay(db, allCasts);
 
     await indexPersonalData(db, allCasts);
 
@@ -229,7 +237,60 @@ async function indexCasts() {
     console.log('done')
 }
 
+async function indexCastsPerDay(db, allCasts) {
+    console.log("running indexCastsPerDay....")
+    const date = Date.now() - 30*24*60*60*1000 // 30 days
+
+    const oldConnection = db.collection('casts_30days')
+    const newCollection = db.collection('casts_30days_temp')
+
+    // If the temp table already exists, drop it
+    try {
+        await newCollection.drop();
+    } catch {}
+
+    await newCollection.createIndex({ dateInMs: 1 });
+
+    const filteredCast = allCasts
+        .filter(cast => cast.body.publishedAt > date)
+
+    const resultDBObj = filteredCast.reduce((result, cast) => {
+        const currentCastDate = new Date(cast.body.publishedAt);
+        const currentDate = currentCastDate.toLocaleDateString();
+        if (result[currentDate]) {
+            result[currentDate] += 1
+        } else {
+            result[currentDate] = 1
+        }
+        return result;
+    }, {})
+
+    const result = []
+    for (let key in resultDBObj) {
+        result.push({
+            date: key,
+            count: resultDBObj[key],
+            dateInMs: (new Date(key)).getTime()
+        })
+    }
+
+    // console.log(result);
+
+    await newCollection.insertMany(result).catch((err) => {
+        console.log(`Error saving casts to MongoDB.`, err.message)
+    })
+
+    // Replace existing collection with new casts
+    try {
+        await oldConnection.drop()
+    } catch (err) {
+        console.log('Error dropping collection.', err.codeName)
+    }
+    await newCollection.rename('casts_30days')
+}
+
 async function indexPersonalData(db, allCasts) {
+    console.log("running indexPersonalData....")
     const oldConnection = db.collection('profile_details')
     const newCollection = db.collection('profile_details_temp')
 
@@ -315,6 +376,7 @@ function getWordWeight(word, count) {
 }
 
 async function indexProfiles() {
+    console.log("running indexProfiles....")
     const startTime = Date.now()
     const db = client.db('farcaster')
     const oldConnection = db.collection('profiles')
