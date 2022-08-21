@@ -26,23 +26,8 @@ export default async function handler(
   }
 
   const username = req.query.username;
-  // const mongodbURL = process.env.NEXT_MONGODB_URI;
-  // if (!mongodbURL) {
-  //   return { props: { response: "" } };
-  // }
-  // const client = new MongoClient(mongodbURL, {
-  //   serverApi: ServerApiVersion.v1,
-  // });
 
-  // client.connect((err) => {
-  //   if (err) {
-  //     console.error(err);
-  //     return { props: { response: "" } };
-  //   }
-  // });
   try {
-    // const db = client.db("farcaster");
-
     const { db } = await connectToDatabase();
 
     // Order by desc and last 10 days
