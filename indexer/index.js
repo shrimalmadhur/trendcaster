@@ -47,7 +47,7 @@ async function getAllCasts(db) {
             return null
         })
 
-    if (!profiles) 
+    if (!profiles)
         return
 
     console.log(`Indexing casts from ${profiles.length} profiles...`)
@@ -78,12 +78,12 @@ async function indexAllCasts(db, allCasts) {
     // If the temp table already exists, drop it
     try {
         await newCollection.drop()
-    } catch {}
+    } catch { }
 
     // Avoid indexing duplicate casts
     await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
 
-    
+
     await newCollection.insertMany(allCasts).catch((err) => {
         console.log(`Error saving casts to MongoDB.`, err.message)
     })
@@ -99,7 +99,7 @@ async function indexAllCasts(db, allCasts) {
 
 async function getWordCountData(allCasts) {
     console.log("running getWordCountData....");
-    const date = Date.now() - 24*60*60*1000
+    const date = Date.now() - 24 * 60 * 60 * 1000
 
     //  /(\w+)caster\W*/gm
 
@@ -107,7 +107,7 @@ async function getWordCountData(allCasts) {
     // allCasts
 
     const bots = ["perl"]
-    
+
     const re = /\s+/;
     const filteredCast = allCasts
         .filter(cast => cast.body.publishedAt > date)
@@ -129,11 +129,11 @@ async function getWordCountData(allCasts) {
             word = word.toLowerCase()
             // TODO: remove only punctuations
             // TODO: remove punctuations from start and end
-            if (word.startsWith("@") 
-                || word.includes("https://") 
-                || word.includes("http://") 
+            if (word.startsWith("@")
+                || word.includes("https://")
+                || word.includes("http://")
                 || word.includes("farcaster://casts")
-                || !isNaN(word) 
+                || !isNaN(word)
                 || wordsToIgnore.includes(word)) {
                 continue;
             }
@@ -149,14 +149,14 @@ async function getWordCountData(allCasts) {
     // console.log(wordMap)
 
     // remove small counts 
-    const removeCount = Array.from({length: 50}, (_, i) => i + 1);
-    for(let word in wordMap) {
+    const removeCount = Array.from({ length: 50 }, (_, i) => i + 1);
+    for (let word in wordMap) {
         const count = wordMap[word]
         const weight = getWordWeight(word, count)
-        if (removeCount.includes(weight)){
+        if (removeCount.includes(weight)) {
             continue;
         }
-        wordCount.push({word: word, count: count, weight: weight});
+        wordCount.push({ word: word, count: count, weight: weight });
     }
 
     return wordCount;
@@ -180,12 +180,12 @@ async function saveCastCount(db, size) {
 async function saveWordCountData(db, wordCount) {
     console.log("running saveWordCountData....")
     const oldWC = db.collection('word_count')
-    const newWC= db.collection('word_count_temp')
+    const newWC = db.collection('word_count_temp')
 
     // If the temp table already exists, drop it
     try {
         await newWC.drop()
-    } catch {}
+    } catch { }
 
     await newWC.createIndex({ count: 1 })
 
@@ -216,15 +216,15 @@ async function indexCasts() {
     if (!allCasts) {
         return;
     }
-    
-    // await indexAllCasts(db, allCasts);
 
-    // await saveCastCount(db, allCasts.length);
+    await indexAllCasts(db, allCasts);
 
-    // const wordCount = await getWordCountData(allCasts);
-    // await saveWordCountData(db, wordCount)
+    await saveCastCount(db, allCasts.length);
 
-    // await indexPersonalData(db, allCasts);
+    const wordCount = await getWordCountData(allCasts);
+    await saveWordCountData(db, wordCount)
+
+    await indexPersonalData(db, allCasts);
 
     await indexCastsPerDay(db, allCasts);
 
@@ -239,7 +239,7 @@ async function indexCasts() {
 
 async function indexCastsPerDay(db, allCasts) {
     console.log("running indexCastsPerDay....")
-    const date = Date.now() - 30*24*60*60*1000 // 30 days
+    const date = Date.now() - 30 * 24 * 60 * 60 * 1000 // 30 days
 
     const filteredCast = allCasts
         .filter(cast => cast.body.publishedAt > date)
@@ -258,15 +258,15 @@ async function indexCastsPerDay(db, allCasts) {
             if (result.users[username][currentDate]) {
                 result.users[username][currentDate] += 1
             } else {
-                result.users[username][currentDate] = 1 
+                result.users[username][currentDate] = 1
             }
         } else {
             result.users[username] = {};
-            result.users[username][currentDate] = 1   
+            result.users[username][currentDate] = 1
         }
 
         return result;
-    }, { all: {}, users: {}})
+    }, { all: {}, users: {} })
 
     await indexAll30DaysCast(db, resultDBObj);
 
@@ -280,7 +280,7 @@ async function indexUsers30DaysCast(db, casts) {
         const currUser = key;
         const castData = casts.users[key];
         const castDataArray = [];
-        for (let eachKey in castData){
+        for (let eachKey in castData) {
             castDataArray.push({
                 date: eachKey,
                 count: castData[eachKey],
@@ -299,7 +299,7 @@ async function indexUsers30DaysCast(db, casts) {
     // If the temp table already exists, drop it
     try {
         await newCollection.drop();
-    } catch {}
+    } catch { }
 
     await newCollection.createIndex({ user: 1 });
 
@@ -333,7 +333,7 @@ async function indexAll30DaysCast(db, casts) {
     // If the temp table already exists, drop it
     try {
         await newCollection.drop();
-    } catch {}
+    } catch { }
 
     await newCollection.createIndex({ dateInMs: 1 });
 
@@ -358,17 +358,17 @@ async function indexPersonalData(db, allCasts) {
     // If the temp table already exists, drop it
     try {
         await newCollection.drop();
-    } catch {}
+    } catch { }
 
     // Avoid indexing duplicate casts
     await newCollection.createIndex({ farcasterAddress: 1 }, { unique: true })
     await newCollection.createIndex({ username: 1 })
 
-    const personalDB =  allCasts.reduce((result, cast) => {
+    const personalDB = allCasts.reduce((result, cast) => {
         const castText = cast.body.data.text;
         const currentCastDate = cast.body.publishedAt;
         if (result[cast.body.address]) {
-            if (castText.startsWith("delete:farcaster://")){
+            if (castText.startsWith("delete:farcaster://")) {
                 result[cast.body.address].deletedCastCount += 1
             } else if (castText.startsWith("recast:farcaster://")) {
                 result[cast.body.address].recastCount += 1
@@ -398,7 +398,7 @@ async function indexPersonalData(db, allCasts) {
                     username: cast.body.username,
                     firstCastDate: currentCastDate
                 }
-            }  
+            }
         }
         return result;
     }, {})
@@ -446,7 +446,7 @@ async function indexProfiles() {
     // If the temp table already exists, drop it
     try {
         await newCollection.drop()
-    } catch {}
+    } catch { }
 
     // Avoid indexing duplicate profiles
     await newCollection.createIndex({ merkleRoot: 1 }, { unique: true })
@@ -514,9 +514,8 @@ async function indexProfiles() {
             .then(() => profilesIndexed++)
             .catch((err) => {
                 console.log(
-                    `Error saving directory for @${username} ${
-                        err.message.includes('dup key') &&
-                        '(duplicate cast found)'
+                    `Error saving directory for @${username} ${err.message.includes('dup key') &&
+                    '(duplicate cast found)'
                     }`
                 )
             })
@@ -541,7 +540,7 @@ async function indexProfiles() {
         .catch((err) => {
             console.log(`Error saving count data ${err.message}`)
         })
-    
+
 
     const endTime = Date.now()
     const secondsTaken = (endTime - startTime) / 1000
@@ -557,10 +556,10 @@ async function main() {
     await indexCasts()
 }
 
-// main()
+main()
 // indexProfiles()
 
-indexCasts()
+// indexCasts()
 
 // Run job every day at 8pm
 // cron.schedule('0 20 * * *', () => {
