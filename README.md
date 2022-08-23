@@ -14,6 +14,9 @@ yarn dev
 
 Open `http://localhost:3000` with your browser to see the result.
 
+### Alchemy Wallet connection
+You can use [.env.example](./.env.example) file to put enviornment variables. You will need to fill `NEXT_PUBLIC_ALCHEMY_URL` for running the app.
+
 ### Sample data
 
 To seed the data locally, create `.env.local` in your in your root folder and add the following variable
