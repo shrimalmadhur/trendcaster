@@ -97,20 +97,22 @@ async function indexAllCasts(db, allCasts) {
     await newCollection.rename('casts')
 }
 
+async function getLast24hoursCasts(allCasts) {
+    console.log("running getLast24hoursCasts....");
+    const date = Date.now() - 24 * 60 * 60 * 1000;
+    const filteredCast = allCasts
+        .filter(cast => cast.body.publishedAt > date)
+
+    return filteredCast;
+}
+
 async function getWordCountData(allCasts) {
     console.log("running getWordCountData....");
-    const date = Date.now() - 24 * 60 * 60 * 1000
-
-    //  /(\w+)caster\W*/gm
-
-    // Index casts count
-    // allCasts
 
     const bots = ["perl"]
 
     const re = /\s+/;
     const filteredCast = allCasts
-        .filter(cast => cast.body.publishedAt > date)
         .filter(cast => !bots.includes(cast.body.username))
         .filter(cast => !cast.body.data.text.startsWith("recast:farcaster://"))
         .filter(cast => !cast.body.data.text.startsWith("delete:farcaster://"))
@@ -217,16 +219,20 @@ async function indexCasts() {
         return;
     }
 
+    const last24hoursCasts = await getLast24hoursCasts(allCasts);
+
     await indexAllCasts(db, allCasts);
 
     await saveCastCount(db, allCasts.length);
 
-    const wordCount = await getWordCountData(allCasts);
+    const wordCount = await getWordCountData(last24hoursCasts);
     await saveWordCountData(db, wordCount)
 
     await indexPersonalData(db, allCasts);
 
     await indexCastsPerDay(db, allCasts);
+
+    // await indexLast24HourTimeData(db, last24hoursCasts)
 
     const endTime = Date.now();
     const secondsTaken = (endTime - startTime) / 1000;
@@ -235,6 +241,26 @@ async function indexCasts() {
         `Saved ${allCasts.length} casts from ${profilesIndexed} profiles in ${secondsTaken} seconds`
     )
     console.log('done')
+}
+
+async function indexLast24HourTimeData(db, casts) {
+    // casts has 24 hrs
+    const results = casts.reduce((result, cast) => {
+        const time = new Date(cast.body.publishedAt);
+        const hour = time.getUTCHours();
+        // console.log(result, cast)
+        if (result[hour]) {
+            result[hour].count += 1
+        } else {
+            result[hour] = {
+                count: 1,
+                hour: hour,
+                timeMS: time
+            }
+        }
+        return result;
+    }, {});
+    console.log(results);
 }
 
 async function indexCastsPerDay(db, allCasts) {
