@@ -9,7 +9,7 @@ export default async function handler(
   const address = req.query.address;
   try {
     const result = await axios.get("https://searchcaster.xyz/api/profiles?connected_address=" + address);
-    res.status(200).json(result.data[0].username);
+    res.status(200).json(result.data[0].body.username);
   } catch (error) {
     console.log(error);
     return res.status(500).end(error);

@@ -114,7 +114,6 @@ const ProfileDetails: FC = () => {
             const connectedAddress = wallet.accounts[0].address;
             axios("/api/searchcaster/" + connectedAddress)
                 .then((response) => {
-                    console.log(response);
                     setUsername(response.data);
                 })
         }

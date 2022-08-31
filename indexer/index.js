@@ -588,7 +588,7 @@ main()
 // indexCasts()
 
 // Run job every day at 8pm
-// cron.schedule('0 20 * * *', () => {
+// cron.schedule('0 9,21 * * *', () => {
 //     main()
 // });
 
